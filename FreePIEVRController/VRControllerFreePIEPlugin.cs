@@ -220,6 +220,8 @@ namespace FreePIEVRController
             quaternion[2] = orientation[2] / abs * sin;
             quaternion[3] = Math.Cos(abs / 2);
 
+            position = ArmModel.CalculateModel(quaternion);
+
             // Acceleration
             double ascale = 8.0 * 9.8 / 4095.0;
             acceleration[0] = ParseInt(53, 66, true, buf) * ascale;
@@ -236,23 +238,23 @@ namespace FreePIEVRController
             double tscale = 1 / 255.0;
             int tx = ParseInt(131, 139, false, buf);
             int ty = ParseInt(139, 147, false, buf);
-            
+
             // from -1.0(left) to +1.0(right)
-            touch[0] = tx * tscale * 2.0 - 1.0;
+            trackpad[0] = tx * tscale * 2.0 - 1.0;
             // from -1.0(top) to +1.0(bottom)
-            touch[1] = ty * tscale * 2.0 - 1.0;
-            touching = tx != 0 || ty != 0;
+            trackpad[1] = ty * tscale * 2.0 - 1.0;
+            button[TOUCH] = tx != 0 || ty != 0;
 
             // Vol up
-            button[4] = ParseInt(147, 148, false, buf) != 0;
+            button[VOLUP] = ParseInt(147, 148, false, buf) != 0;
             // Vol down
-            button[3] = ParseInt(148, 149, false, buf) != 0;
+            button[VOLDOWN] = ParseInt(148, 149, false, buf) != 0;
             // App
-            button[2] = ParseInt(149, 150, false, buf) != 0;
+            button[APP] = ParseInt(149, 150, false, buf) != 0;
             // Home
-            button[1] = ParseInt(150, 151, false, buf) != 0;
+            button[HOME] = ParseInt(150, 151, false, buf) != 0;
             // Click
-            button[0] = ParseInt(151, 152, false, buf) != 0;
+            button[CLICK] = ParseInt(151, 152, false, buf) != 0;
 
             // Version
             version = ParseInt(152, 160, false, buf);
@@ -310,6 +312,8 @@ namespace FreePIEVRController
             quaternion[2] = -AHRS.Quaternion[2];
             quaternion[3] = AHRS.Quaternion[3];
 
+            position = ArmModel.CalculateModel(quaternion);
+
             temperature = buf[DATA_SIZE * dataCount + 6 + 3]; // 57
 
             int touchPos = DATA_SIZE * dataCount + 6; // 54
@@ -319,19 +323,19 @@ namespace FreePIEVRController
 
             double tscale = 1.0 / 320.0;
             // from -1.0(left) to +1.0(right)
-            touch[0] = tx * tscale * 2.0 - 1.0;
+            trackpad[0] = tx * tscale * 2.0 - 1.0;
             // from -1.0(top) to +1.0(bottom)
-            touch[1] = ty * tscale * 2.0 - 1.0;
-            touching = touchFlag == 1;
+            trackpad[1] = ty * tscale * 2.0 - 1.0;
+            button[TOUCH] = touchFlag == 1;
 
             // trigger, home, back, touch click, vol up, vol down
-            int buttonPos = DATA_SIZE * dataCount + 6 + 3 + 1 + 1; // 58;
-            button[5] = (buf[buttonPos] & (1 << 0)) != 0;
-            button[1] = (buf[buttonPos] & (1 << 1)) != 0;
-            button[2] = (buf[buttonPos] & (1 << 2)) != 0;
-            button[0] = (buf[buttonPos] & (1 << 3)) != 0;
-            button[4] = (buf[buttonPos] & (1 << 4)) != 0;
-            button[3] = (buf[buttonPos] & (1 << 5)) != 0;
+            int buttonPos = DATA_SIZE * dataCount + 6 + 3 + 1; // 58;
+            button[TRIGGER] = (buf[buttonPos] & (1 << 0)) != 0;
+            button[HOME] = (buf[buttonPos] & (1 << 1)) != 0;
+            button[APP] = (buf[buttonPos] & (1 << 2)) != 0;
+            button[CLICK] = (buf[buttonPos] & (1 << 3)) != 0;
+            button[VOLUP] = (buf[buttonPos] & (1 << 4)) != 0;
+            button[VOLDOWN] = (buf[buttonPos] & (1 << 5)) != 0;
 
             version = buf[DATA_SIZE * dataCount + 6 + 3 + 1 + 1]; // 59
         }
@@ -516,17 +520,30 @@ namespace FreePIEVRController
         public double[] acceleration { get; private set; } = new double[3];
         // Gyroscope
         public double[] gyroscope { get; private set; } = new double[3];
+        // Position (caluclated by arm model)
+        public double[] position { get; private set; } = new double[3];
         // Touch X,Y
-        public double[] touch { get; private set; } = new double[2];
-        // Buttons (touchpad click, home, app(daydream)/back(gearvr), vol down, vol up, trigger(gearvr only))
-        public bool[] button { get; private set; } = new bool[6];
-        public bool click { get { return button[0]; } }
-        public bool home { get { return button[1]; } }
-        public bool app { get { return button[2]; } }
-        public bool voldown { get { return button[3]; } }
-        public bool volup { get { return button[4]; } }
-        public bool trigger { get { return button[5]; } }
-        public bool touching { get; private set; }
+        public double[] trackpad { get; private set; } = new double[2];
+        // Buttons (touchpad touch, touchpad click, home, app(daydream)/back(gearvr), vol down, vol up, trigger(gearvr only))
+        private const int CONST_BUTTONS = 7;
+        public bool[] button { get; private set; } = new bool[CONST_BUTTONS];
+
+        public int TOUCH { get; } = 0;
+        public int CLICK { get; } = 1;
+        public int HOME { get; } = 2;
+        public int APP { get; } = 3;
+        public int VOLDOWN { get; } = 4;
+        public int VOLUP { get; } = 5;
+        public int TRIGGER { get; } = 6;
+        public int BUTTONS { get; } = CONST_BUTTONS;
+
+        public bool touch { get { return button[TOUCH]; } }
+        public bool click { get { return button[CLICK]; } }
+        public bool home { get { return button[HOME]; } }
+        public bool app { get { return button[APP]; } }
+        public bool voldown { get { return button[VOLDOWN]; } }
+        public bool volup { get { return button[VOLUP]; } }
+        public bool trigger { get { return button[TRIGGER]; } }
 
         // Version from last byte
         public int version { get; private set; } = 0;

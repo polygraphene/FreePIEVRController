@@ -51,6 +51,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArmModel.cs" />
     <Compile Include="MadgwickAHRS.cs" />
     <Compile Include="VRControllerFreePIEPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
