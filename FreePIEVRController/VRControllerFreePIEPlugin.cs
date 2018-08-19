@@ -241,8 +241,8 @@ namespace FreePIEVRController
 
             // from -1.0(left) to +1.0(right)
             trackpad[0] = tx * tscale * 2.0 - 1.0;
-            // from -1.0(top) to +1.0(bottom)
-            trackpad[1] = ty * tscale * 2.0 - 1.0;
+            // from -1.0(bottom) to +1.0(top)
+            trackpad[1] = 1.0 - ty * tscale * 2.0;
             button[TOUCH] = tx != 0 || ty != 0;
 
             // Vol up
@@ -307,10 +307,12 @@ namespace FreePIEVRController
                 AHRS.Update((float)gx, (float)gy, (float)gz, (float)ax, (float)ay, (float)az, (float)mx, (float)my, (float)mz);
             }
 
-            quaternion[0] = -AHRS.Quaternion[0];
-            quaternion[1] = -AHRS.Quaternion[1];
+            // We need to fix the difference of coordinate system between AHRS and VR app.
+            // I don't know how to introduce correct conversion, but it seems roughly right (working).
+            quaternion[0] = AHRS.Quaternion[1];
+            quaternion[1] = AHRS.Quaternion[3];
             quaternion[2] = -AHRS.Quaternion[2];
-            quaternion[3] = AHRS.Quaternion[3];
+            quaternion[3] = AHRS.Quaternion[0];
 
             position = ArmModel.CalculateModel(quaternion);
 
@@ -324,8 +326,8 @@ namespace FreePIEVRController
             double tscale = 1.0 / 320.0;
             // from -1.0(left) to +1.0(right)
             trackpad[0] = tx * tscale * 2.0 - 1.0;
-            // from -1.0(top) to +1.0(bottom)
-            trackpad[1] = ty * tscale * 2.0 - 1.0;
+            // from -1.0(bottom) to +1.0(top)
+            trackpad[1] = 1.0 - ty * tscale * 2.0;
             button[TOUCH] = touchFlag == 1;
 
             // trigger, home, back, touch click, vol up, vol down
