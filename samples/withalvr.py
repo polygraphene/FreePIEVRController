@@ -154,9 +154,9 @@ for c in range(0, 2):
   
   alvr.override_controller_position = True
   
-  alvr.controller_position[c][0] = vrcontroller[c].position[0] * 3 + offset[0]
-  alvr.controller_position[c][1] = vrcontroller[c].position[1] * 3 + offset[1]
-  alvr.controller_position[c][2] = vrcontroller[c].position[2] * 3 + offset[2]
+  alvr.controller_position[c][0] = vrcontroller[c].position[0] + offset[0]
+  alvr.controller_position[c][1] = vrcontroller[c].position[1] + offset[1]
+  alvr.controller_position[c][2] = vrcontroller[c].position[2] + offset[2]
   #alvr.controller_position[1-controller][0] = alvr.input_controller_position[0] + offset[0] + 0.1
   #alvr.controller_position[1-controller][1] = alvr.input_controller_position[1] + offset[1] + 0.1
   #alvr.controller_position[1-controller][2] = alvr.input_controller_position[2] + offset[2] + 0.1

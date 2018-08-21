@@ -83,7 +83,7 @@ namespace FreePIEVRController
 
         public string FriendlyName
         {
-            get { return "VR Controller FreePIE Plugin"; }
+            get { return "VR Controller"; }
         }
 
         public bool GetProperty(int index, IPluginProperty property)
@@ -91,10 +91,10 @@ namespace FreePIEVRController
             if (index == 0)
             {
                 property.Name = "SomeProperty";
-                property.Caption = "VR Controller FreePIE plugin is installed";
-                property.HelpText = "VR Controller FreePIE plugin is installed";
+                property.Caption = "VR Controller is installed";
+                property.HelpText = "VR Controller is installed";
 
-                property.Choices.Add("VR Controller FreePIE plugin is installed", 1);
+                property.Choices.Add("VR Controller is installed", 1);
 
                 property.DefaultValue = 1;
                 return true;
