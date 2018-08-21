@@ -275,10 +275,11 @@ namespace FreePIEVRController
             int dataCount = (buf.Length - FOOTER_SIZE) / DATA_SIZE;
 
             var mscale = 0.06 * 0.06;
-            var mx = Get16(DATA_SIZE * dataCount + 0, buf) * mscale; // 48 ~ 54
-            var my = Get16(DATA_SIZE * dataCount + 2, buf) * mscale;
-            var mz = Get16(DATA_SIZE * dataCount + 4, buf) * mscale;
-            var mmag = Math.Sqrt(mx * mx + my * my + mz * mz);
+            magnetometer[0] = Get16(DATA_SIZE * dataCount + 0, buf) * mscale; // 48 ~ 54
+            magnetometer[1] = Get16(DATA_SIZE * dataCount + 2, buf) * mscale;
+            magnetometer[2] = Get16(DATA_SIZE * dataCount + 4, buf) * mscale;
+            var mmag = Math.Sqrt(magnetometer[0] * magnetometer[0]
+                + magnetometer[1] * magnetometer[1] + magnetometer[2] * magnetometer[2]);
 
             for (int i = 0; i < dataCount; i++)
             {
@@ -304,7 +305,7 @@ namespace FreePIEVRController
                 gyroscope[1] = gy;
                 gyroscope[2] = gz;
 
-                AHRS.Update((float)gx, (float)gy, (float)gz, (float)ax, (float)ay, (float)az, (float)mx, (float)my, (float)mz);
+                AHRS.Update((float)gx, (float)gy, (float)gz, (float)ax, (float)ay, (float)az, (float)magnetometer[0], (float)magnetometer[1], (float)magnetometer[2]);
             }
 
             // We need to fix the difference of coordinate system between AHRS and VR app.
@@ -371,7 +372,7 @@ namespace FreePIEVRController
                 service = await AsTask(GattDeviceService.FromIdAsync(info.Id));
                 if (service == null)
                 {
-                    Console.WriteLine("Error: Other device is using the device.");
+                    Console.WriteLine("Error: Another program is using the device.");
                     return false;
                 }
 
@@ -417,7 +418,7 @@ namespace FreePIEVRController
                 service = await AsTask(GattDeviceService.FromIdAsync(info.Id));
                 if (service == null)
                 {
-                    Console.WriteLine("Error: Other device is using the device.");
+                    Console.WriteLine("Error: Another program is using the device.");
                     return false;
                 }
 
@@ -470,7 +471,7 @@ namespace FreePIEVRController
                 if (status == GattCommunicationStatus.Success)
                 {
                     Console.WriteLine("Connected.");
-                    AHRS = new AHRS.MadgwickAHRS(1f / Constants.GEARVR_HZ, 0.1f);
+                    AHRS = new AHRS.MadgwickAHRS(1f / Constants.GEARVR_HZ, 0.01f);
                     type = Constants.TYPE_GEARVR;
                     bdaddr = BDAddrToString(service.Device.BluetoothAddress);
                     deviceId = service.Device.DeviceId;
@@ -516,12 +517,14 @@ namespace FreePIEVRController
 
         // Controller orientation in quaternion(x,y,z,w) rad.
         public double[] quaternion { get; private set; } = new double[4];
-        // Orientation raw (x,y,z)
+        // Orientation raw (x,y,z) (only for Daydream)
         public double[] orientation { get; private set; } = new double[3];
         // Acceleration in (x,y,z) ms^-2
         public double[] acceleration { get; private set; } = new double[3];
         // Gyroscope
         public double[] gyroscope { get; private set; } = new double[3];
+        // Magnetometer (only for GearVR)
+        public double[] magnetometer { get; private set; } = new double[3];
         // Position (caluclated by arm model)
         public double[] position { get; private set; } = new double[3];
         // Touch X,Y
